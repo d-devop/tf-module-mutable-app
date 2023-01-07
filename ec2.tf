@@ -1,27 +1,38 @@
-resource "aws_spot_instance_request" "rabbitmq" {
-  count                  = var.instance_count
-  ami                    = data.aws_ami.centos8.id
+resource "aws_launch_template" "launch-template" {
+  name_prefix            = "${var.component}-${var.env}"
+  image_id               = data.aws_ami.centos8.id
   instance_type          = var.instance_type
-  subnet_id              = element(local.app_subnets_ids, count.index)
   vpc_security_group_ids = [aws_security_group.allow_app.id]
-  wait_for_fulfillment   = true
 
-  tags = {
-    Name = "${var.env}-rabbitmq"
+  instance_market_options {
+    market_type = "spot"
   }
 
-  user_data = <<EOF
-#!/bin/bash
-touch /opt/user-data.log
-id >>/opt/user-data.log
-labauto ansible
-ansible-pull -i localhost, -U https://github.com/d-devop/roboshop-ansible roboshop.yml -e ROLE_NAME=rabbitmq -e ENV=${var.env} | tee -a /opt/user-data.log
-EOF
+  user_data = base64encode(templatefile("${path.module}/ansible-pull.sh", {
+    component = var.component
+    env       = var.env
+  }))
 }
 
-resource "aws_ec2_tag" "name-tag" {
-  count                  = var.instance_count
-  resource_id = element(aws_spot_instance_request.rabbitmq.*.spot_instance_id, count.index)
-  key         = "Name"
-  value       = "${var.env}-rabbitmq"
+
+resource "aws_autoscaling_group" "asg" {
+  name                = "${var.component}-${var.env}"
+  desired_capacity    = var.desired_capacity
+  max_size            = var.max_size
+  min_size            = var.min_size
+  vpc_zone_identifier = local.app_subnets_ids
+
+  target_group_arns = [aws_lb_target_group.tg.arn]
+
+  launch_template {
+    id      = aws_launch_template.launch-template.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.component}-${var.env}"
+    propagate_at_launch = true
+  }
+
 }
