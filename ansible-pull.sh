@@ -1,4 +1,3 @@
-
 #!/bin/bash
 touch /opt/user-data.log
 id >>/opt/user-data.log
