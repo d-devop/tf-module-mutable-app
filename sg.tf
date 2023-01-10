@@ -5,10 +5,10 @@ resource "aws_security_group" "allow_app" {
 
   ingress {
     description = "APP"
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = var.app_port
+    to_port     = var.app_port
     protocol    = "tcp"
-    cidr_blocks = local.app_subnets_cidr
+    cidr_blocks = local.allow_app_access
   }
 
   ingress {
