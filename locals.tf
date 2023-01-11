@@ -14,3 +14,4 @@ locals {
   alb_dns_name = { for k, v in var.load_balancers : k => lookup(v.alb, "dns_name", null) }
   dns_name     = var.component == "frontend" ? local.alb_dns_name["public"] : local.alb_dns_name["private"]
 }
+
