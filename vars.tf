@@ -11,3 +11,4 @@ variable "app_port" {}
 variable "load_balancers" {}
 variable "lb_rule_priority" {}
 variable "domain" {}
+variable "allow_monitor_cidr" {}
