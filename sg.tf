@@ -19,6 +19,14 @@ resource "aws_security_group" "allow_app" {
     cidr_blocks = var.allow_ssh_cidr
   }
 
+  ingress {
+    description = "PROMETHEUS"
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = var.allow_monitor_cidr
+  }
+
   egress {
     from_port        = 0
     to_port          = 0
